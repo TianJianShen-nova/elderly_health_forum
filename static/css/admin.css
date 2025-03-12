@@ -1,0 +1,45 @@
+.brand {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    font-weight: bold;
+    font-family: "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+}
+
+.navbar-default {
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nav-tabs {
+    margin-bottom: 20px;
+}
+
+.table {
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.table thead th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: #357ABD;
+    border-color: #357ABD;
+}
+
+.form-control {
+    border-radius: 5px;
+}
+
+.help-block {
+    color: #6c757d;
+    font-size: 0.875rem;
+}

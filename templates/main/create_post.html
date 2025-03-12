@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}发帖{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title text-center mb-4">发布新帖子</h2>
+                <form method="post">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        <label for="title" class="form-label">标题</label>
+                        {{ form.title(class="form-control form-control-lg", placeholder="请输入帖子标题") }}
+                        {% for error in form.title.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="mb-3">
+                        <label for="content" class="form-label">内容</label>
+                        {{ form.content(class="form-control", rows="10", placeholder="请输入帖子内容") }}
+                        {% for error in form.content.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">发布帖子</button>
+                        <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">返回首页</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

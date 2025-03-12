@@ -1,0 +1,173 @@
+{% extends 'admin/base.html' %}
+{% block head_css %}
+{{ super() }}
+<link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+<link href="{{ url_for('static', filename='css/admin.css') }}" rel="stylesheet">
+<link href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+{% endblock %}
+{% block brand %}
+<span class="navbar-brand">老年人健康论坛管理系统</span>
+{% endblock %}
+{% block tail %}
+{{ super() }}
+<script src="https://cdn.bootcdn.net/ajax/libs/bootstrap/5.3.1/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
+
+{% block body %}
+{{ super() }}
+<div class="modal fade" id="batchApproveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">批量审核</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>确定要批量通过选中的帖子吗？</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirmBatchApprove">确定</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 添加批量审核按钮
+    const modelView = document.querySelector('.model-list');
+    if (modelView) {
+        const toolbar = modelView.querySelector('.btn-toolbar');
+        if (toolbar) {
+            const batchApproveBtn = document.createElement('button');
+            batchApproveBtn.className = 'btn btn-success';
+            batchApproveBtn.innerHTML = '<i class="fas fa-check-double"></i> 批量审核';
+            batchApproveBtn.setAttribute('data-bs-toggle', 'modal');
+            batchApproveBtn.setAttribute('data-bs-target', '#batchApproveModal');
+            toolbar.appendChild(batchApproveBtn);
+        }
+    }
+
+    // 添加审核状态列和操作按钮
+    const table = document.querySelector('.table');
+    if (table) {
+        const headers = table.querySelector('thead tr');
+        if (headers) {
+            const statusHeader = document.createElement('th');
+            statusHeader.textContent = '审核状态';
+            headers.appendChild(statusHeader);
+
+            const actionHeader = document.createElement('th');
+            actionHeader.textContent = '审核操作';
+            headers.appendChild(actionHeader);
+        }
+
+        const rows = table.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            // 从表格单元格中获取帖子ID和审核状态
+            const cells = row.querySelectorAll('td');
+            let postId = null;
+            let isApproved = false;
+            
+            // 查找包含ID的单元格（通常是第一列）
+            if (cells.length > 0) {
+                const idCell = cells[0];
+                postId = idCell.textContent.trim();
+            }
+            
+            // 查找包含审核状态的单元格
+            cells.forEach(cell => {
+                if (cell.textContent.includes('已审核') || cell.textContent.includes('true')) {
+                    isApproved = true;
+                }
+            });
+            
+            // 设置行的data属性
+            if (postId) {
+                row.setAttribute('data-id', postId);
+                row.setAttribute('data-status', isApproved ? 'approved' : 'pending');
+            }
+            
+            const statusCell = document.createElement('td');
+            const status = row.getAttribute('data-status') || 'pending';
+            statusCell.innerHTML = status === 'approved' ? 
+                '<span class="badge bg-success">已通过</span>' : 
+                '<span class="badge bg-warning">待审核</span>';
+            row.appendChild(statusCell);
+
+            const actionCell = document.createElement('td');
+            if (status !== 'approved') {
+                actionCell.innerHTML = `
+                    <button class="btn btn-sm btn-success approve-btn" title="通过审核">
+                        <i class="fas fa-check"></i>
+                    </button>
+                    <button class="btn btn-sm btn-danger reject-btn" title="拒绝审核">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+            }
+            row.appendChild(actionCell);
+        });
+    }
+
+    // 处理审核操作
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.approve-btn')) {
+            const row = e.target.closest('tr');
+            const postId = row.getAttribute('data-id');
+            // 发送审核通过请求
+            fetch(`/admin/approve/${postId}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        row.querySelector('td:nth-last-child(2)').innerHTML = 
+                            '<span class="badge bg-success">已通过</span>';
+                        row.querySelector('td:last-child').innerHTML = '';
+                    }
+                });
+        } else if (e.target.closest('.reject-btn')) {
+            const row = e.target.closest('tr');
+            const postId = row.getAttribute('data-id');
+            // 发送拒绝请求
+            fetch(`/admin/reject/${postId}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        row.remove();
+                    }
+                });
+        }
+    });
+
+    // 处理批量审核
+    document.getElementById('confirmBatchApprove').addEventListener('click', function() {
+        const selectedRows = document.querySelectorAll('tr.selected');
+        const postIds = Array.from(selectedRows).map(row => row.getAttribute('data-id'));
+        
+        // 发送批量审核请求
+        fetch('/admin/batch-approve', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ post_ids: postIds })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                selectedRows.forEach(row => {
+                    row.querySelector('td:nth-last-child(2)').innerHTML = 
+                        '<span class="badge bg-success">已通过</span>';
+                    row.querySelector('td:last-child').innerHTML = '';
+                    row.classList.remove('selected');
+                });
+                const modal = document.getElementById('batchApproveModal');
+                const bsModal = bootstrap.Modal.getInstance(modal);
+                bsModal.hide();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

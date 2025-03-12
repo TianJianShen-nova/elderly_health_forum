@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <!-- 帖子内容 -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h1 class="card-title h2">{{ post.title }}</h1>
+                <div class="text-muted mb-3">
+                    <span>作者：{{ post.author.username }}</span>
+                    <span class="mx-2">|</span>
+                    <span>发布时间：{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    <span class="mx-2">|</span>
+                    <span>点赞数：<span id="likes-count">{{ post.likes }}</span></span>
+                </div>
+                <div class="card-text mb-4" style="font-size: 1.1em; line-height: 1.6;">
+                    {{ post.content|nl2br }}
+                </div>
+                {% if current_user.is_authenticated %}
+                <div class="d-flex justify-content-between align-items-center">
+                    <button class="btn btn-outline-primary" id="like-button" data-post-id="{{ post.id }}">
+                        <i class="fas fa-thumbs-up"></i> 点赞
+                    </button>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> 返回首页
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 评论区 -->
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title h4 mb-4">评论区</h3>
+                
+                {% if current_user.is_authenticated %}
+                <form method="post" action="{{ url_for('main.add_comment', id=post.id) }}" class="mb-4">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ form.content(class="form-control", rows="3", placeholder="写下您的评论...") }}
+                        {% for error in form.content.errors %}
+                        <span class="text-danger">{{ error }}</span>
+                        {% endfor %}
+                    </div>
+                    <button type="submit" class="btn btn-primary">发表评论</button>
+                </form>
+                {% else %}
+                <div class="alert alert-info">
+                    请<a href="{{ url_for('auth.login') }}">登录</a>后发表评论
+                </div>
+                {% endif %}
+
+                <!-- 评论列表 -->
+                {% if comments %}
+                <div class="mt-4">
+                    {% for comment in comments %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <strong>{{ comment.author.username }}</strong>
+                                    <small class="text-muted ms-2">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                </div>
+                            </div>
+                            <p class="card-text">{{ comment.content }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">暂无评论</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if current_user.is_authenticated %}
+<script>
+document.getElementById('like-button').addEventListener('click', function() {
+    const postId = this.getAttribute('data-post-id');
+    fetch(`/post/${postId}/like`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            document.getElementById('likes-count').textContent = data.likes;
+        }
+    });
+});
+</script>
+{% endif %}
+{% endblock %}

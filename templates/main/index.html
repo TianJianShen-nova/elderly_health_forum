@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}首页{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        {% if current_user.is_authenticated %}
+        <div class="mb-4">
+            <a href="{{ url_for('main.create_post') }}" class="btn btn-primary btn-lg w-100">
+                <i class="fas fa-edit"></i> 发布新帖子
+            </a>
+        </div>
+        {% endif %}
+
+        {% for post in posts.items %}
+        <div class="card">
+            <div class="card-body">
+                <h3 class="card-title h4">
+                    <a href="{{ url_for('main.view_post', id=post.id) }}" class="text-decoration-none text-dark">
+                        {{ post.title }}
+                    </a>
+                </h3>
+                <p class="card-text text-muted small">
+                    <span>作者：{{ post.author.username }}</span>
+                    <span class="mx-2">|</span>
+                    <span>发布时间：{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    <span class="mx-2">|</span>
+                    <span>点赞数：{{ post.likes }}</span>
+                </p>
+                <p class="card-text">{{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}</p>
+                <a href="{{ url_for('main.view_post', id=post.id) }}" class="btn btn-outline-primary">阅读全文</a>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if posts.items %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if posts.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.index', page=posts.prev_num) }}">上一页</a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in range(max(1, posts.page-2), min(posts.pages+1, posts.page+3)) %}
+                <li class="page-item {% if page_num == posts.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('main.index', page=page_num) }}">{{ page_num }}</a>
+                </li>
+                {% endfor %}
+
+                {% if posts.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('main.index', page=posts.next_num) }}">下一页</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% else %}
+        <div class="text-center mt-5">
+            <h3>暂无帖子</h3>
+            {% if current_user.is_authenticated %}
+            <p>来发布第一篇帖子吧！</p>
+            {% else %}
+            <p>登录后即可发帖参与讨论！</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

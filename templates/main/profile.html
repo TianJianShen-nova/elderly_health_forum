@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}{{ user.username }}的个人主页{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <!-- 用户信息卡片 -->
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    <h2 class="card-title display-6 mb-3">{{ user.username }}</h2>
+                    <p class="text-muted fs-5">{{ user.email }}</p>
+                    {% if user.is_admin %}
+                    <span class="badge bg-primary fs-6">管理员</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- 用户的帖子列表 -->
+            <h3 class="h4 mb-4">发布的帖子</h3>
+            {% if posts %}
+                {% for post in posts %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h4 class="card-title h5">
+                            <a href="{{ url_for('main.view_post', id=post.id) }}" class="text-decoration-none text-dark">
+                                {{ post.title }}
+                            </a>
+                        </h4>
+                        <p class="card-text text-muted small">
+                            <span>发布时间：{{ post.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                            <span class="mx-2">|</span>
+                            <span>点赞数：{{ post.likes }}</span>
+                        </p>
+                        <p class="card-text">{{ post.content[:200] }}{% if post.content|length > 200 %}...{% endif %}</p>
+                        <a href="{{ url_for('main.view_post', id=post.id) }}" class="btn btn-outline-primary">阅读全文</a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info fs-5" role="alert">
+                    暂无已审核的帖子
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
